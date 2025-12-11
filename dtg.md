@@ -5,7 +5,7 @@
 This document specifies a unified schema for seven subtypes of W3C Verifiable Credentials used in the Decentralized Trust Graph (DTG). These credentials allow for privacy-preserving zero-knowledge proofs (ZKPs) of personhood, community membership, and facts about relationships from the perspective of the entities involved.
 
 1.  **Community Credential** (VCC): Establishes membership in a community defined by a Community DID (C-DID).
-2.  **Personhood Credential** (PHC): A specialized VCC issued by a C-DID listed in a trust registry (PHC-DID) to establish verified personhood.
+2.  **Personhood Credential** (PHC): A specialized VCC issued by a C-DID listed in a high assurance trust registry (PHC-DID) to establish verified personhood.
 3.  **Relationship Credential** (VRC): Establishes a directional relationship edge between two entities within the same community context.
 4.  **Persona Credential** (VPC): Enables an entity to share a specific persona/context without creating a new DTG edge.
 5.  **Endorsement Credential** (VEC): Endorses another entity for skills or accomplishments.
@@ -24,7 +24,7 @@ The abstract base class for all credentials in this specification. All other cre
 A typically public DID representing a community, organization, DAO, or group. C-DIDs act as the issuer for Community Credentials (VCCs).
 
 **_PHC-DID_**
-A specific subset of C-DIDs that are listed in a publicly verifiable trust registry. They are authorized to issue Personhood Credentials.
+A specific subset of C-DIDs that are listed in a high-assurance publicly verifiable trust registry. They are authorized to issue Personhood Credentials.
 
 **_R-DID (Relationship DID)_**
 A pairwise private and unique DID used to establish a unique node context or graph edge.
@@ -72,7 +72,7 @@ graph TD
     classDef witness fill:#ede7f6,stroke:#512da8,stroke-width:2px,color:black;
 
     %% Nodes
-    Registry([Trust Registry]):::trustRegistry
+    Registry([High Assurance Trust Registry]):::trustRegistry
 
     subgraph Community_Context [Community Context]
         direction TB
@@ -145,7 +145,7 @@ All types share an abstract base schema, distinguished using the `type` array.
   "type": [
     "VerifiableCredential",
     "DTGCredential",
-    "RelationshipCredential"
+    // specific DTG credential type goes here
   ],
   "issuer": "did:example:issuerDid",
   "validFrom": "2024-06-18T10:00:00Z",
@@ -168,8 +168,9 @@ All types share an abstract base schema, distinguished using the `type` array.
 *   **validUntil** (`string`, optional):The date and time the credential expires, in ISO 8601 format.
 
 #### For specific credential subtypes
-*   **credentialSubject.endorsement** (`object`): (VEC only) Details of the endorsement.
+*   **credentialSubject.endorsement** (`object`): (VEC only) Details of the endorsement. The structure of this endorsement is TBD.
 *   **credentialSubject.card** (`array`): (R-Card only) JCard data.
+*   **credentialSubject.digest** (`string`): (VWC only) A cryptographic hash of the witnessed VRC (to prevent reuse). A SHA‑256 hash of the verifiable credential's canonical representation. The hash is encoded as a multibase string (multihash + multibase).
 *   **credentialSubject.witnessContext** (`object`): (VWC only) Describes the witnessing parameters.
     *   **event** (`string`): Human-readable name of the event or location (e.g., "Class 101", "Conference 2025").
     *   **sessionId** (`string`): The challenge/nonce used in the wrapping protocol.
@@ -188,7 +189,7 @@ All types share an abstract base schema, distinguished using the `type` array.
 The VCC represents the "entry ticket" into a specific community or graph. It establishes an initial node for the holder within that C-DID's namespace.
 
 *   **type**: MUST include `"CommunityCredential"`.
-*   **issuer**: MUST be a **C-DID** (Community DID).
+*   **issuer**: MUST be a **C-DID** (Community DID). May or may not appear in a trust registry.
 *   **credentialSubject.id**: An R-DID used solely for membership in this community.
 
 **Example:** A local chess club (C-DID) issues a VCC to a member.
@@ -207,7 +208,7 @@ The VCC represents the "entry ticket" into a specific community or graph. It est
 A specialized VCC where the C-DID is a high-assurance, registered trust anchor.
 
 *   **type**: MUST include `"PersonhoodCredential"`.
-*   **issuer**: MUST be a **PHC-DID** (a C-DID listed in a publicly verifiable trust registry).
+*   **issuer**: MUST be a **PHC-DID** (a C-DID listed in a high assurance publicly verifiable trust registry).
 *   **Validation**: Verifiers check the issuer against the registry.
 
 **Example:** Government Agency Issues PHC.
@@ -308,7 +309,7 @@ A third party attests to the establishment of a VRC. It effectively "locks in" t
 *   **type**: MUST include `"WitnessCredential"`.
 *   **issuer**: The Witness DID.
 *   **credentialSubject.id**: MUST match the Subject of the witnessed VRC.
-*   **credentialSubject.digest** (Optional): A cryptographic hash of the witnessed VRC (to prevent reuse).
+*   **credentialSubject.digest** (Optional): A cryptographic hash of the witnessed VRC (to prevent reuse). A SHA‑256 hash of the verifiable credential's canonical representation. The hash is encoded as a multibase string (multihash + multibase).
 *   **credentialSubject.witnessContext** (Optional): An object describing the session, event, or conditions under which the witnessing occurred.
 
 **Example:** Witness attests to a relationship formed at EthDenver 2024.
